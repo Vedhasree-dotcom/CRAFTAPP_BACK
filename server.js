@@ -42,7 +42,6 @@ app.use("/api/crafts", craftRoutes);
 // app.use("/api/admin", adminRoutes);
 
 
-// app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
 app.listen(process.env.PORT, ()=> console.log(`Server 
