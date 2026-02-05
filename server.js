@@ -27,7 +27,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 
 // Server uploaded images statically 
-// app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static("uploads"));
 
 
 app.use("/api/auth", authRoutes);
