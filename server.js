@@ -14,7 +14,6 @@ require("dotenv").config();
 
 const app = express();
 
-// Allow credentials so httpOnly refresh cookie can be sent
 app.use(cors({origin: "http://localhost:5173", credentials:true}));
 
 app.use(cookieParser());
@@ -26,7 +25,6 @@ mongoose.connect(process.env.MONGO_URI)
     .catch(err => console.log(err));
 
 
-// Server uploaded images statically 
 app.use("/uploads", express.static("uploads"));
 
 

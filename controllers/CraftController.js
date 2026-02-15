@@ -47,21 +47,34 @@ exports.getCraftById = async (req, res) => {
 
   // POST /api/crafts/find
  
-exports.findCraftsByMaterial = async (req, res) => {
+exports.findCraftsByImage = async (req, res) => {
   try {
-    const materials = JSON.parse(req.body.materials || "[]");
+    if (!req.file) {
+      return res.status(400).json({ message: "Image required" });
+    }
 
-    if (!materials.length) {
-      return res.status(400).json({ message: "Materials required" });
+    const filename = req.file.originalname.toLowerCase();
+
+    let detectedMaterials = [];
+
+    if (filename.includes("paper")) detectedMaterials.push("paper");
+    if (filename.includes("paint")) detectedMaterials.push("paint");
+    if (filename.includes("glue")) detectedMaterials.push("glue");
+    if (filename.includes("clay")) detectedMaterials.push("clay");
+    if (filename.includes("knitting")) detectedMaterials.push("knitting");
+
+    if (detectedMaterials.length === 0) {
+      return res.json({ results: [] });
     }
 
     const crafts = await Craft.find({
-      materials: { $in: materials },
+      materials: { $in: detectedMaterials }
     });
 
     res.json({ results: crafts });
+
   } catch (err) {
-    console.error("FindCraft error:", err);
+    console.error("Image Find error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 };

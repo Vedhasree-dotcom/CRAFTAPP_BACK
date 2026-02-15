@@ -5,11 +5,19 @@ const { protect, adminOnly} = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadCraft");
 
 
-router.post("/find", protect, craftController.findCraftsByMaterial);
+router.post(
+  "/find-by-image",
+  protect,
+  upload.single("image"),
+  craftController.findCraftsByImage
+);
+
 
 router.get("/", craftController.getAllCrafts);
 router.get("/category/:category", craftController.getCraftsByCategory);
 router.get("/:id", craftController.getCraftById);
+
+
 
 // Admin
 router.post(
