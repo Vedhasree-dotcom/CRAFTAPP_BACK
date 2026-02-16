@@ -24,7 +24,10 @@ router.post(
   "/",
   protect,
   adminOnly,
-  upload.single("image"), 
+  upload.fields([
+    { name: "image", maxCount: 1 },  // main craft image
+    { name: "stepImages" }           // array of images for tutorial steps
+  ]),
   craftController.createCraft
 );
 
@@ -34,7 +37,10 @@ router.put(
   "/:id",
   protect,
   adminOnly,
-  upload.single("image"),
+ upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "stepImages", maxCount: 20 },
+  ]),
   craftController.updateCraft
 );
 

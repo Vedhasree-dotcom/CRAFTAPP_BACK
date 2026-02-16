@@ -93,8 +93,20 @@ exports.createCraft = async (req, res) => {
       tutorialSteps,
     } = req.body;
 
-    if (!req.file) {
-      return res.status(400).json({ message: "Craft image is required" });
+    // Check main craft image
+    if (!req.files?.image || !req.files.image[0]) {
+      return res.status(400).json({ message: "Craft main image is required" });
+    }
+
+    // Parse JSON fields
+    const parsedMaterials = materials ? JSON.parse(materials) : [];
+    const parsedSteps = tutorialSteps ? JSON.parse(tutorialSteps) : [];
+
+    // Attach step images if uploaded
+    if (req.files?.stepImages) {
+      req.files.stepImages.forEach((file, index) => {
+        if (parsedSteps[index]) parsedSteps[index].image = `/uploads/${file.filename}`;
+      });
     }
 
     const craft = new Craft({
@@ -102,10 +114,10 @@ exports.createCraft = async (req, res) => {
       description,
       price,
       category,
-      materials: JSON.parse(materials),
-      image: `/uploads/${req.file.filename}`,
+      materials: parsedMaterials,
+      image: `/uploads/${req.files.image[0].filename}`, // main craft image
       tutorialVideo,
-      tutorialSteps: tutorialSteps ? JSON.parse(tutorialSteps) : [],
+      tutorialSteps: parsedSteps,
     });
 
     await craft.save();
@@ -116,14 +128,11 @@ exports.createCraft = async (req, res) => {
   }
 };
 
-
+//  UPDATE craft (Admin only)
 exports.updateCraft = async (req, res) => {
   try {
     const craft = await Craft.findById(req.params.id);
-
-    if (!craft) {
-      return res.status(404).json({ message: "Craft not found" });
-    }
+    if (!craft) return res.status(404).json({ message: "Craft not found" });
 
     const {
       title,
@@ -141,20 +150,29 @@ exports.updateCraft = async (req, res) => {
     craft.category = category || craft.category;
     craft.tutorialVideo = tutorialVideo || craft.tutorialVideo;
 
-    if (materials) {
-      craft.materials = JSON.parse(materials);
+    // Parse materials
+    if (materials) craft.materials = JSON.parse(materials);
+
+    // Parse tutorial steps
+    const parsedSteps = tutorialSteps
+      ? JSON.parse(tutorialSteps)
+      : craft.tutorialSteps;
+
+    // Attach/update step images if uploaded
+    if (req.files?.stepImages) {
+      req.files.stepImages.forEach((file, index) => {
+        if (parsedSteps[index]) parsedSteps[index].image = `/uploads/${file.filename}`;
+      });
     }
 
-    if (tutorialSteps) {
-      craft.tutorialSteps = JSON.parse(tutorialSteps);
-    }
+    craft.tutorialSteps = parsedSteps;
 
-    if (req.file) {
-      craft.image = `/uploads/${req.file.filename}`;
+    // Update main craft image if uploaded
+    if (req.files?.image && req.files.image[0]) {
+      craft.image = `/uploads/${req.files.image[0].filename}`;
     }
 
     await craft.save();
-
     res.json(craft);
 
   } catch (err) {
@@ -163,18 +181,14 @@ exports.updateCraft = async (req, res) => {
   }
 };
 
+//  DELETE craft
 exports.deleteCraft = async (req, res) => {
   try {
     const craft = await Craft.findById(req.params.id);
-
-    if (!craft) {
-      return res.status(404).json({ message: "Craft not found" });
-    }
+    if (!craft) return res.status(404).json({ message: "Craft not found" });
 
     await craft.deleteOne();
-
     res.json({ message: "Craft deleted successfully" });
-
   } catch (err) {
     console.error("Delete craft error:", err);
     res.status(500).json({ message: "Failed to delete craft" });
