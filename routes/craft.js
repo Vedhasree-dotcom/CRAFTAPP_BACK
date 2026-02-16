@@ -28,4 +28,23 @@ router.post(
   craftController.createCraft
 );
 
+
+// ✏ Update Craft
+router.put(
+  "/:id",
+  protect,
+  adminOnly,
+  upload.single("image"),
+  craftController.updateCraft
+);
+
+// 🗑 Delete Craft
+router.delete(
+  "/:id",
+  protect,
+  adminOnly,
+  craftController.deleteCraft
+);
+
+
 module.exports = router;

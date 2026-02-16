@@ -32,21 +32,3 @@ exports.updateSubmissionStatus = async (req, res) => {
   res.json(submission);
 };
 
-exports.createCraft = async (req, res) => {
-  const craft = await Craft.create(req.body);
-  res.status(201).json(craft);
-};
-
-exports.getAllCrafts = async (req, res) => {
-  try {
-    const crafts = await Craft.find().sort({ createdAt: -1 });
-    res.json(crafts);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-exports.deleteCraft = async (req, res) => {
-  await Craft.findByIdAndDelete(req.params.id);
-  res.json({ message: "Craft deleted" });
-};

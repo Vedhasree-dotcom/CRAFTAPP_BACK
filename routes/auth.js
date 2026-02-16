@@ -101,25 +101,34 @@ router.post("/login", async (req, res) => {
             return res.status(400).json({ message: "User not found" });
 
         if (!user.isVerified)
-            return res.status(400).json({ message: "Email not verified. Please verify your email before login" });
+            return res.status(400).json({ message: "Email not verified" });
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch)
             return res.status(400).json({ message: "Incorrect password" });
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        user.otp = otp;
+        const payload = { 
+            id: user._id, 
+            name: user.name, 
+            email: user.email, 
+            role: user.role || "user" 
+        };
+
+        const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "15m" });
+        const refreshToken = jwt.sign({ id: user._id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+
+        user.refreshToken = refreshToken;
         await user.save();
 
-        if (!user.phone) {
-            return res.status(400).json({ message: "User has no phone number on record" });
-        }
-        await client.messages.create({
-            body: `Your login OTP is ${otp}`,
-            from: process.env.TWILIO_PHONE,
-            to: user.phone,
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
         });
-        res.json({ message: "OTP sent" });
+
+        res.json({ message: "Login successful", accessToken });
+
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -157,46 +166,7 @@ router.post("/forgot-password", async (req, res) => {
 });
 
 
-router.post("/verify-otp", async (req, res) => {
-    const { email, otp } = req.body;
 
-    if (!email || !isEmail(email))
-        return res.status(400).json({ message: "valid email is required" });
-    
-    if (!otp || typeof otp !== 'string' || !/^\d{6}$/.test(otp))
-        return res.status(400).json({ message: "OTP must be a 6 digit string" });
-
-    try {
-        const user = await User.findOne({email });
-        if (!user)
-            return res.status(400).json({ message: "User not found" });
-
-        if (user.otp === otp) {
-            user.otp = null;
-            await user.save();
-
-            const payload = { id: user._id, name: user.name, email: user.email, role: user.role || 'user' };
-
-            const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "15m" });
-            const refreshToken = jwt.sign({ id: user._id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
-
-            user.refreshToken = refreshToken;
-            await user.save();
-
-            res.cookie("refreshToken", refreshToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
-                maxAge: 7 * 24 * 60 * 60 * 1000,
-            });
-            res.status(200).json({ message: "Login successful", accessToken });
-        } else {
-            res.status(400).json({ message: "Invalid OTP" });
-        }
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
 
 router.post("/refresh", async (req, res) => {
     try{

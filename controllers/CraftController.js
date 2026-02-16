@@ -115,3 +115,68 @@ exports.createCraft = async (req, res) => {
     res.status(400).json({ message: "Failed to create craft" });
   }
 };
+
+
+exports.updateCraft = async (req, res) => {
+  try {
+    const craft = await Craft.findById(req.params.id);
+
+    if (!craft) {
+      return res.status(404).json({ message: "Craft not found" });
+    }
+
+    const {
+      title,
+      description,
+      price,
+      category,
+      materials,
+      tutorialVideo,
+      tutorialSteps,
+    } = req.body;
+
+    craft.title = title || craft.title;
+    craft.description = description || craft.description;
+    craft.price = price || craft.price;
+    craft.category = category || craft.category;
+    craft.tutorialVideo = tutorialVideo || craft.tutorialVideo;
+
+    if (materials) {
+      craft.materials = JSON.parse(materials);
+    }
+
+    if (tutorialSteps) {
+      craft.tutorialSteps = JSON.parse(tutorialSteps);
+    }
+
+    if (req.file) {
+      craft.image = `/uploads/${req.file.filename}`;
+    }
+
+    await craft.save();
+
+    res.json(craft);
+
+  } catch (err) {
+    console.error("Update craft error:", err);
+    res.status(400).json({ message: "Failed to update craft" });
+  }
+};
+
+exports.deleteCraft = async (req, res) => {
+  try {
+    const craft = await Craft.findById(req.params.id);
+
+    if (!craft) {
+      return res.status(404).json({ message: "Craft not found" });
+    }
+
+    await craft.deleteOne();
+
+    res.json({ message: "Craft deleted successfully" });
+
+  } catch (err) {
+    console.error("Delete craft error:", err);
+    res.status(500).json({ message: "Failed to delete craft" });
+  }
+};
