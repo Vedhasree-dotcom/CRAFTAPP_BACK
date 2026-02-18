@@ -10,6 +10,11 @@ const userSchema = new mongoose.Schema({
     resetOtp: { type: String },
     resetOtpExpire: { type: Date },
     refreshToken: String,
+
+    savedCrafts: [
+        { type: mongoose.Schema.Types.ObjectId, ref: "Craft" }
+    ],
+
 })
 
 module.exports = mongoose.model('User', userSchema);

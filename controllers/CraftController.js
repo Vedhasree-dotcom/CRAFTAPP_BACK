@@ -1,4 +1,6 @@
 const Craft = require("../models/Craft");
+const User = require("../models/User");
+
 
 
 //  GET all crafts
@@ -76,6 +78,45 @@ exports.findCraftsByImage = async (req, res) => {
   } catch (err) {
     console.error("Image Find error:", err);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.toggleSaveCraft = async (req, res) => {
+  try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const craftId = req.params.id;
+
+    const alreadySaved = user.savedCrafts.some(
+      (id) => id.toString() === craftId
+    );
+
+    if (alreadySaved) {
+      user.savedCrafts = user.savedCrafts.filter(
+        (id) => id.toString() !== craftId
+      );
+    } else {
+      user.savedCrafts.push(craftId);
+    }
+
+    await user.save();
+
+    return res.json({
+      message: alreadySaved ? "Craft unsaved" : "Craft saved",
+      savedCrafts: user.savedCrafts,
+    });
+
+  } catch (error) {
+    console.error("SAVE ERROR:", error);  
+    return res.status(500).json({ message: "Server error" });
   }
 };
 

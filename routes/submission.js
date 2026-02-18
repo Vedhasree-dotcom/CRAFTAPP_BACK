@@ -15,4 +15,7 @@ router.get("/pending", protect, adminOnly, submissionController.getPendingSubmis
 router.put("/:id/approve", protect, adminOnly, submissionController.approveSubmission);
 router.put("/:id/reject", protect, adminOnly, submissionController.rejectSubmission);
 
+// USER: like or unlike submission
+router.put("/:id/like", protect, submissionController.toggleLike);
+
 module.exports = router;

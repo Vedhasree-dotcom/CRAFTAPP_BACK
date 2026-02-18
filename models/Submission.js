@@ -5,11 +5,17 @@ const SubmissionSchema = new mongoose.Schema({
   craftId: { type: mongoose.Schema.Types.ObjectId, ref: "Craft" },
   images: [String],
   description: String,
+
+  likes: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+  ],
+
   status: {
     type: String,
     enum: ["pending", "approved", "rejected"],
     default: "pending"
   },
+
   createdAt: { type: Date, default: Date.now }
 });
 

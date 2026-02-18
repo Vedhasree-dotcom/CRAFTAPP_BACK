@@ -17,6 +17,7 @@ router.get("/", craftController.getAllCrafts);
 router.get("/category/:category", craftController.getCraftsByCategory);
 router.get("/:id", craftController.getCraftById);
 
+router.put("/:id/save", protect, craftController.toggleSaveCraft);
 
 
 // Admin

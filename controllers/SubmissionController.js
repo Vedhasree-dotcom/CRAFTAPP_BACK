@@ -1,6 +1,7 @@
 const Submission = require("../models/Submission");
 
-const createSubmission = async (req, res) => {
+// Create Submission
+exports.createSubmission = async (req, res) => {
   try {
     const submission = await Submission.create({
       userId: req.user._id,
@@ -8,38 +9,83 @@ const createSubmission = async (req, res) => {
       images: req.body.images,
       description: req.body.description
     });
+
     res.status(201).json(submission);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
 };
 
-const getApprovedSubmissions = async (req, res) => {
-  const submissions = await Submission.find({ status: "approved" })
-    .populate("userId", "name")
-    .populate("craftId", "title");
-  res.json(submissions);
+// Get Approved Submissions
+exports.getApprovedSubmissions = async (req, res) => {
+  try {
+    const submissions = await Submission.find({ status: "approved" })
+      .populate("userId", "name")
+      .populate("craftId", "title")
+      .sort({ createdAt: -1 });
+
+    res.json(submissions);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-const getPendingSubmissions = async (req, res) => {
-  const submissions = await Submission.find({ status: "pending" });
-  res.json(submissions);
+
+// Get Pending Submissions
+exports.getPendingSubmissions = async (req, res) => {
+  try {
+    const submissions = await Submission.find({ status: "pending" });
+    res.json(submissions);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-const approveSubmission = async (req, res) => {
-  await Submission.findByIdAndUpdate(req.params.id, { status: "approved" });
-  res.json({ message: "Approved" });
+// Approve Submission
+exports.approveSubmission = async (req, res) => {
+  try {
+    await Submission.findByIdAndUpdate(req.params.id, { status: "approved" });
+    res.json({ message: "Approved" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-const rejectSubmission = async (req, res) => {
-  await Submission.findByIdAndUpdate(req.params.id, { status: "rejected" });
-  res.json({ message: "Rejected" });
+// Reject Submission
+exports.rejectSubmission = async (req, res) => {
+  try {
+    await Submission.findByIdAndUpdate(req.params.id, { status: "rejected" });
+    res.json({ message: "Rejected" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-module.exports = {
-  createSubmission,
-  getApprovedSubmissions,
-  getPendingSubmissions,
-  approveSubmission,
-  rejectSubmission
+// Toggle Like
+exports.toggleLike = async (req, res) => {
+  try {
+    const submission = await Submission.findById(req.params.id);
+
+    if (!submission) {
+      return res.status(404).json({ message: "Submission not found" });
+    }
+
+    const userId = req.user._id;
+
+    const alreadyLiked = submission.likes.includes(userId);
+
+    if (alreadyLiked) {
+      submission.likes = submission.likes.filter(
+        id => id.toString() !== userId.toString()
+      );
+    } else {
+      submission.likes.push(userId);
+    }
+
+    await submission.save();
+
+    res.json({ message: "Like updated", likes: submission.likes.length });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
