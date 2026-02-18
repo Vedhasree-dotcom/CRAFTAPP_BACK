@@ -1,11 +1,12 @@
 const express = require("express");
 const router = express.Router();
-
+const upload = require("../middleware/uploadCraft");   
 const { protect, adminOnly } = require("../middleware/authMiddleware");
 const submissionController = require("../controllers/SubmissionController");
 
-// USER: submit craft
-router.post("/", protect, submissionController.createSubmission);
+
+router.post("/", protect,   upload.single("images"),  
+ submissionController.createSubmission);
 
 // PUBLIC: view approved submissions
 router.get("/", submissionController.getApprovedSubmissions);

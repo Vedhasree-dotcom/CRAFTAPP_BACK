@@ -4,9 +4,10 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser"); 
 const authRoutes = require("./routes/auth");
-// const submissionRoutes = require("./routes/submission");
+const submissionRoutes = require("./routes/submission");
 const adminRoutes = require("./routes/admin");
-// const path = require("path");
+const userRoutes = require("./routes/user");
+
 const craftRoutes = require("./routes/craft");
 
 require("dotenv").config();
@@ -30,12 +31,16 @@ app.use("/uploads", express.static("uploads"));
 
 app.use("/api/auth", authRoutes);
 
-
 app.use("/api/crafts", craftRoutes);
+    
+app.use("/api/user", userRoutes);
+
+app.use("/api/submission", submissionRoutes);
 
 
 // admin
 app.use("/api/admin", adminRoutes);
+
 
 
 

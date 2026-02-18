@@ -3,15 +3,22 @@ const Submission = require("../models/Submission");
 // Create Submission
 exports.createSubmission = async (req, res) => {
   try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Image is required" });
+    }
+
     const submission = await Submission.create({
       userId: req.user._id,
       craftId: req.body.craftId,
-      images: req.body.images,
-      description: req.body.description
+      description: req.body.description,
+      images: ["/uploads/" + req.file.filename],  
+      status: "pending"
     });
 
     res.status(201).json(submission);
+
   } catch (err) {
+    console.error("CREATE SUBMISSION ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
