@@ -6,7 +6,7 @@ exports.getProfile = async (req, res) => {
     const userId = req.user._id;
 
     const user = await User.findById(userId)
-      .select("name email role savedCrafts")
+      .select("name email role phone savedCrafts")
       .populate({
         path: "savedCrafts",
         select: "title category price image",
