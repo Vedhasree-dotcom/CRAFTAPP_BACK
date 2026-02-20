@@ -1,6 +1,5 @@
 const Submission = require("../models/Submission");
 
-// Create Submission
 exports.createSubmission = async (req, res) => {
   try {
     if (!req.file) {
@@ -23,7 +22,6 @@ exports.createSubmission = async (req, res) => {
   }
 };
 
-// Get Approved Submissions
 exports.getApprovedSubmissions = async (req, res) => {
   try {
     const submissions = await Submission.find({ status: "approved" })
@@ -38,17 +36,18 @@ exports.getApprovedSubmissions = async (req, res) => {
 };
 
 
-// Get Pending Submissions
 exports.getPendingSubmissions = async (req, res) => {
   try {
-    const submissions = await Submission.find({ status: "pending" });
+    const submissions = await Submission.find({ status: "pending" })
+      .populate("userId", "name")
+      .populate("craftId", "title");
+
     res.json(submissions);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// Approve Submission
 exports.approveSubmission = async (req, res) => {
   try {
     await Submission.findByIdAndUpdate(req.params.id, { status: "approved" });
@@ -58,7 +57,6 @@ exports.approveSubmission = async (req, res) => {
   }
 };
 
-// Reject Submission
 exports.rejectSubmission = async (req, res) => {
   try {
     await Submission.findByIdAndUpdate(req.params.id, { status: "rejected" });
@@ -68,7 +66,6 @@ exports.rejectSubmission = async (req, res) => {
   }
 };
 
-// Toggle Like
 exports.toggleLike = async (req, res) => {
   try {
     const submission = await Submission.findById(req.params.id);
