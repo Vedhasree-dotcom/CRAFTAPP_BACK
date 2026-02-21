@@ -66,6 +66,19 @@ exports.rejectSubmission = async (req, res) => {
   }
 };
 
+exports.getSubmissionStats = async (req, res) => {
+  try {
+    const pending = await Submission.countDocuments({ status: "pending" });
+    const approved = await Submission.countDocuments({ status: "approved" });
+    const rejected = await Submission.countDocuments({ status: "rejected" });
+
+    res.json({ pending, approved, rejected });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 exports.toggleLike = async (req, res) => {
   try {
     const submission = await Submission.findById(req.params.id);

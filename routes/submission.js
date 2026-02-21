@@ -14,6 +14,7 @@ router.get("/", submissionController.getApprovedSubmissions);
 router.get("/pending", protect, adminOnly, submissionController.getPendingSubmissions);
 router.put("/:id/approve", protect, adminOnly, submissionController.approveSubmission);
 router.put("/:id/reject", protect, adminOnly, submissionController.rejectSubmission);
+router.get("/stats", protect, adminOnly, submissionController.getSubmissionStats);
 
 
 // USER: like or unlike submission

@@ -11,8 +11,17 @@ exports.getDashboardStats = async (req, res) => {
 };
 
 exports.getAllUsers = async (req, res) => {
-  const users = await User.find().select("-password");
+  const users = await User.find({ role: "user" }).select("-password");
   res.json(users);
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: "User deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Delete failed" });
+  }
 };
 
 exports.getAllSubmissions = async (req, res) => {

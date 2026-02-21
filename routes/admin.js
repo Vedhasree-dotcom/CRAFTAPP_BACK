@@ -23,6 +23,13 @@ router.get(
   adminController.getAllUsers
 );
 
+router.delete(
+  "/users/:id",
+  protect,
+  adminOnly,
+  adminController.deleteUser
+);
+
 
 // GET /api/admin/submissions
 router.get(
