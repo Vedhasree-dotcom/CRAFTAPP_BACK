@@ -15,13 +15,7 @@
 //     type: Number,
 //     required: true
 //   },
-//   razorpayOrderId: String,
-//   razorpayPaymentId: String,
-//   isPaid: {
-//     type: Boolean,
-//     default: false
-//   },
-//   paidAt: Date
+//   
 // });
 
 // module.exports = mongoose.model("Payment", paymentSchema);
