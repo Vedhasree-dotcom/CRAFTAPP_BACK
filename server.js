@@ -5,8 +5,10 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser"); 
 const authRoutes = require("./routes/auth");
 const submissionRoutes = require("./routes/submission");
+const paymentRoutes = require("./routes/payment");
 const adminRoutes = require("./routes/admin");
 const userRoutes = require("./routes/user");
+
 
 const craftRoutes = require("./routes/craft");
 
@@ -36,6 +38,8 @@ app.use("/api/crafts", craftRoutes);
 app.use("/api/user", userRoutes);
 
 app.use("/api/submission", submissionRoutes);
+
+app.use("/api/payments", paymentRoutes);
 
 
 // admin
