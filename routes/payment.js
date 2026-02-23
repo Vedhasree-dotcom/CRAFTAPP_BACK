@@ -4,56 +4,100 @@ const axios = require("axios");
 const Payment = require("../models/Payment");
 const { protect } = require("../middleware/authMiddleware");
 
-router.post("/create-order", protect, async (req, res) => {
+const PAYPAL_BASE_URL = process.env.PAYPAL_BASE_URL || "https://api-m.sandbox.paypal.com";
 
-  const response = await axios.post(
-    "https://api-m.sandbox.paypal.com/v2/checkout/orders",
-    {
-      intent: "CAPTURE",
-      purchase_units: [
-        {
-          amount: {
-            currency_code: "USD",
-            value: "5.00"
-          }
-        }
-      ]
-    },
-    {
-      auth: {
-        username: process.env.PAYPAL_CLIENT_ID,
-        password: process.env.PAYPAL_SECRET
+async function getAccessToken() {
+  // console.log("ID:", process.env.PAYPAL_CLIENT_ID?.slice(0,10));
+  // console.log("Secret:", process.env.PAYPAL_SECRET?.slice(0,10));
+  try {
+    const auth = Buffer.from(
+      `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_SECRET}`
+    ).toString("base64");
+
+    const response = await axios.post(
+      `${PAYPAL_BASE_URL}/v1/oauth2/token`,
+      "grant_type=client_credentials",
+      {
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
       }
-    }
-  );
+    );
 
-  res.json({ orderId: response.data.id });
+    return response.data.access_token;
+  } catch (err) {
+    console.error("PayPal token error:", err.response?.data || err.message);
+    throw new Error("Failed to get PayPal access token");
+  }
+}
+
+router.post("/create-order", protect, async (req, res) => {
+  try {
+    const accessToken = await getAccessToken();
+
+    const response = await axios.post(
+      `${PAYPAL_BASE_URL}/v2/checkout/orders`,
+      {
+        intent: "CAPTURE",
+        purchase_units: [
+          {
+            amount: {
+              currency_code: "USD",
+              value: "5.00", 
+            },
+          },
+        ],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    res.json({ orderId: response.data.id });
+  } catch (err) {
+    console.error("Create order FULL:", JSON.stringify(err.response?.data, null, 2));
+  res.status(500).json({ error: "PayPal create order failed" });
+  }
 });
 
 router.post("/capture-order", protect, async (req, res) => {
-
   const { orderId, craftId } = req.body;
 
-  const response = await axios.post(
-    `https://api-m.sandbox.paypal.com/v2/checkout/orders/${orderId}/capture`,
-    {},
-    {
-      auth: {
-        username: process.env.PAYPAL_CLIENT_ID,
-        password: process.env.PAYPAL_SECRET
+  try {
+    const accessToken = await getAccessToken();
+
+    const response = await axios.post(
+      `${PAYPAL_BASE_URL}/v2/checkout/orders/${orderId}/capture`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
       }
-    }
-  );
+    );
 
-  await Payment.create({
-    userId: req.user._id,
-    craftId,
-    amount: response.data.purchase_units[0].payments.captures[0].amount.value,
-    status: "completed",
-    paypalOrderId: orderId
-  });
+    const amount =
+      response.data.purchase_units[0].payments.captures[0].amount.value;
 
-  res.json({ success: true });
+    // Save payment in DB
+    await Payment.create({
+      userId: req.user._id,
+      craftId,
+      amount,
+      status: "completed",
+      paypalOrderId: orderId,
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("PayPal capture order error:", err.response?.data || err.message);
+    res.status(500).json({ error: "PayPal capture order failed" });
+  }
 });
 
 module.exports = router;
