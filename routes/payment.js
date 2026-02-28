@@ -2,13 +2,13 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const Payment = require("../models/Payment");
+const Craft = require("../models/Craft");
 const { protect } = require("../middleware/authMiddleware");
 
 const PAYPAL_BASE_URL = process.env.PAYPAL_BASE_URL || "https://api-m.sandbox.paypal.com";
 
 async function getAccessToken() {
-  // console.log("ID:", process.env.PAYPAL_CLIENT_ID?.slice(0,10));
-  // console.log("Secret:", process.env.PAYPAL_SECRET?.slice(0,10));
+  
   try {
     const auth = Buffer.from(
       `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_SECRET}`
@@ -32,8 +32,21 @@ async function getAccessToken() {
   }
 }
 
+
 router.post("/create-order", protect, async (req, res) => {
   try {
+    const { craftId } = req.body;
+
+    if (!craftId) {
+      return res.status(400).json({ error: "Craft ID required" });
+    }
+
+    const craft = await Craft.findById(craftId);
+
+    if (!craft) {
+      return res.status(404).json({ error: "Craft not found" });
+    }
+
     const accessToken = await getAccessToken();
 
     const response = await axios.post(
@@ -42,9 +55,10 @@ router.post("/create-order", protect, async (req, res) => {
         intent: "CAPTURE",
         purchase_units: [
           {
+            description: craft.title, 
             amount: {
               currency_code: "USD",
-              value: "5.00", 
+              value: craft.price.toString(),
             },
           },
         ],
@@ -58,16 +72,32 @@ router.post("/create-order", protect, async (req, res) => {
     );
 
     res.json({ orderId: response.data.id });
+
   } catch (err) {
-    console.error("Create order FULL:", JSON.stringify(err.response?.data, null, 2));
-  res.status(500).json({ error: "PayPal create order failed" });
+    console.error("Create order error:", err.response?.data || err.message);
+    res.status(500).json({ error: "PayPal create order failed" });
   }
 });
+
 
 router.post("/capture-order", protect, async (req, res) => {
   const { orderId, craftId } = req.body;
 
   try {
+    const craft = await Craft.findById(craftId);
+    if (!craft) {
+      return res.status(404).json({ error: "Craft not found" });
+    }
+
+    const alreadyPurchased = await Payment.findOne({
+      userId: req.user._id,
+      craftId,
+    });
+
+    if (alreadyPurchased) {
+      return res.status(400).json({ error: "Craft already purchased" });
+    }
+
     const accessToken = await getAccessToken();
 
     const response = await axios.post(
@@ -84,7 +114,6 @@ router.post("/capture-order", protect, async (req, res) => {
     const amount =
       response.data.purchase_units[0].payments.captures[0].amount.value;
 
-    // Save payment in DB
     await Payment.create({
       userId: req.user._id,
       craftId,
@@ -94,10 +123,22 @@ router.post("/capture-order", protect, async (req, res) => {
     });
 
     res.json({ success: true });
+
   } catch (err) {
     console.error("PayPal capture order error:", err.response?.data || err.message);
     res.status(500).json({ error: "PayPal capture order failed" });
   }
+});
+
+
+router.get("/check-purchase/:craftId", protect, async (req, res) => {
+  const payment = await Payment.findOne({
+    userId: req.user._id,
+    craftId: req.params.craftId,
+    status: "completed",
+  });
+
+  res.json({ purchased: !!payment });
 });
 
 module.exports = router;
