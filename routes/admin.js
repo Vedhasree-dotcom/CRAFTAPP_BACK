@@ -47,4 +47,12 @@ router.put(
   adminController.updateSubmissionStatus
 );
 
+router.get(
+  "/purchases",
+  protect,
+  adminOnly,
+  adminController.getAllPurchases
+);
+
+
 module.exports = router;

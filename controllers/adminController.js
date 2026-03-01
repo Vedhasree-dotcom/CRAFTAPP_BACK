@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const Submission = require("../models/Submission");
 const Craft = require("../models/Craft");
+const Payment = require("../models/Payment");
 
 exports.getDashboardStats = async (req, res) => {
   const users = await User.countDocuments();
@@ -41,3 +42,15 @@ exports.updateSubmissionStatus = async (req, res) => {
   res.json(submission);
 };
 
+exports.getAllPurchases = async (req, res) => {
+  try {
+    const purchases = await Payment.find({ status: "completed" })
+      .populate("userId", "name email")
+      .populate("craftId", "title price")
+      .sort({ createdAt: -1 });
+
+    res.json(purchases);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch purchases" });
+  }
+};
