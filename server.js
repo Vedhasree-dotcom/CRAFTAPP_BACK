@@ -8,12 +8,11 @@ const submissionRoutes = require("./routes/submission");
 const paymentRoutes = require("./routes/payment");
 const adminRoutes = require("./routes/admin");
 const userRoutes = require("./routes/user");
-
-
 const craftRoutes = require("./routes/craft");
 
 require("dotenv").config();
 
+const PORT = process.env.PORT || 5000;
 
 const app = express();
 
@@ -53,5 +52,8 @@ app.use("/api/admin", adminRoutes);
 
 
 
-app.listen(process.env.PORT, ()=> console.log(`Server 
-running on port ${process.env.PORT}`));
+// app.listen(process.env.PORT, ()=> console.log(`Server 
+// running on port ${process.env.PORT}`));
+app.listen(PORT, () =>
+  console.log(`Server running on port ${PORT}`)
+);
