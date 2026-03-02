@@ -18,7 +18,7 @@ const app = express();
 
 // app.use(cors({origin: "http://localhost:5173", credentials:true}));
 app.use(cors({
-  origin: true,
+  origin: "https://craftapp-front-git-main-vedhasree-dotcoms-projects.vercel.app",
   credentials: true
 }));
 
