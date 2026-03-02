@@ -10,8 +10,7 @@
     "mongoose": "^9.0.1",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.11",
-    "nodemon": "^3.1.11",
-    "twilio": "^5.10.7"
+    "nodemon": "^3.1.11"
   },
   "name": "finalback",
   "version": "1.0.0",

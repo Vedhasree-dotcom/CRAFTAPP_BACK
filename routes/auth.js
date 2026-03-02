@@ -4,7 +4,6 @@ const User = require("../models/User")
 const bcrypt = require("bcryptjs"); 
 const jwt = require("jsonwebtoken"); 
 const nodemailer = require("nodemailer"); 
-const twilio = require("twilio"); 
 require("dotenv").config();
 
 
@@ -19,8 +18,6 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-const client = twilio(process.env.TWILIO_SID, 
-    process.env.TWILIO_AUTH_TOKEN);
 
 
 function isEmail(value) {
