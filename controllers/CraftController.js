@@ -4,7 +4,6 @@ const User = require("../models/User");
 
 
 //  GET all crafts
-  // GET /api/crafts
  
 exports.getAllCrafts = async (req, res) => {
   try {
@@ -30,7 +29,6 @@ exports.getCraftsByCategory = async (req, res) => {
 };
 
 
-//  GET single craft details
 //  GET /api/crafts/:id
  
 exports.getCraftById = async (req, res) => {
@@ -62,6 +60,7 @@ exports.findCraftsByImage = async (req, res) => {
     if (filename.includes("paper")) detectedMaterials.push("paper");
     if (filename.includes("paint")) detectedMaterials.push("paint");
     if (filename.includes("glue")) detectedMaterials.push("glue");
+    if (filename.includes("home-decor")) detectedMaterials.push("home-decor");
     if (filename.includes("clay")) detectedMaterials.push("clay");
     if (filename.includes("knitting")) detectedMaterials.push("knitting");
 

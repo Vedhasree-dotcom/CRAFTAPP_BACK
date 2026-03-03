@@ -26,14 +26,13 @@ router.post(
   protect,
   adminOnly,
   upload.fields([
-    { name: "image", maxCount: 1 },  // main craft image
-    { name: "stepImages" }           // array of images for tutorial steps
+    { name: "image", maxCount: 1 }, 
+    { name: "stepImages" }          
   ]),
   craftController.createCraft
 );
 
 
-// ✏ Update Craft
 router.put(
   "/:id",
   protect,
@@ -45,7 +44,7 @@ router.put(
   craftController.updateCraft
 );
 
-// 🗑 Delete Craft
+
 router.delete(
   "/:id",
   protect,
