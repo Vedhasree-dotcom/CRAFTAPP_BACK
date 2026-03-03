@@ -121,12 +121,20 @@ router.post("/login", async (req, res) => {
         user.refreshToken = refreshToken;
         await user.save();
 
+        // res.cookie("refreshToken", refreshToken, {
+        //     httpOnly: true,
+        //     secure: process.env.NODE_ENV === "production",
+        //     sameSite: "lax",
+        //     maxAge: 7 * 24 * 60 * 60 * 1000,
+        // });
+
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            secure: true,        
+            sameSite: "none",    // allow cross-site
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
+
 
         res.json({ message: "Login successful", accessToken });
 
@@ -255,7 +263,13 @@ router.post("/logout", async (req, res) => {
                 await user.save();
             }
         }
-        res.clearCookie("refreshToken", { httpOnly: true, sameSite: "lax"}); 
+        // res.clearCookie("refreshToken", { httpOnly: true, sameSite: "lax"});
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+        }); 
+        
         res.json({ message: "Logged out "});
     } catch(err) {
         res.status(500).json({ message: err.message });
