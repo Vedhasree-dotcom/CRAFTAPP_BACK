@@ -68,9 +68,9 @@ exports.findCraftsByImage = async (req, res) => {
       return res.json({ results: [] });
     }
 
-    const crafts = await Craft.find({
-      materials: { $in: detectedMaterials }
-    });
+   const crafts = await Craft.find({
+    materials: { $all: detectedMaterials }
+  });
 
     res.json({ results: crafts });
 
