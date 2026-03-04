@@ -54,7 +54,6 @@ router.post("/register", async(req, res) => {
         const token = jwt.sign({ id: user._id}, process.env.JWT_SECRET, 
             {expiresIn: "1h"}); 
 
-        // const url = `http://localhost:${process.env.PORT}/api/auth/verify/${token}`; 
 
         const BACKEND_URL = process.env.BACKEND_URL;
         const url = `${BACKEND_URL}/api/auth/verify/${token}`;
@@ -120,13 +119,6 @@ router.post("/login", async (req, res) => {
 
         user.refreshToken = refreshToken;
         await user.save();
-
-        // res.cookie("refreshToken", refreshToken, {
-        //     httpOnly: true,
-        //     secure: process.env.NODE_ENV === "production",
-        //     sameSite: "lax",
-        //     maxAge: 7 * 24 * 60 * 60 * 1000,
-        // });
 
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
