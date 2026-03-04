@@ -59,10 +59,13 @@ router.post("/register", async(req, res) => {
         const url = `${BACKEND_URL}/api/auth/verify/${token}`;
         
         await transporter.sendMail({ 
+            from: `"CraftMate" <${process.env.EMAIL_USER}>`,
             to:email,
             subject: "Verify your email",
             html: `<h3>Click <a href="${url}">here</a> to verify your email</h3>`,
         });
+
+        await user.save();
 
         res.status(201).json({ message: "User registered. Check your email to verify."});
     }
@@ -76,7 +79,7 @@ router.get("/verify/:token", async (req, res) => {
         const { id } = jwt.verify(req.params.token, process.env.JWT_SECRET);
         await User.findByIdAndUpdate(id, { isVerified: true });
 
-        const FRONTEND = process.env.FRONTEND_URL || "http://localhost:5173";
+        const FRONTEND = process.env.FRONTEND_URL
         return res.redirect(`${FRONTEND}/login?verified=1`);
 
     } 
@@ -154,6 +157,7 @@ router.post("/forgot-password", async (req, res) => {
         await user.save();
 
         await transporter.sendMail({
+            from: `"CraftMate" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: "Password Reset OTP",
             html: `<h3>Your password reset OTP is: <b>${otp}</b></h3>
