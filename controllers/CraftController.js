@@ -133,19 +133,16 @@ exports.createCraft = async (req, res) => {
       tutorialSteps,
     } = req.body;
 
-    // Check main craft image
     if (!req.files?.image || !req.files.image[0]) {
       return res.status(400).json({ message: "Craft main image is required" });
     }
 
-    // Parse JSON fields
     const parsedMaterials = materials ? JSON.parse(materials) : [];
     const parsedSteps = tutorialSteps ? JSON.parse(tutorialSteps) : [];
 
-    // Attach step images if uploaded
     if (req.files?.stepImages) {
       req.files.stepImages.forEach((file, index) => {
-        if (parsedSteps[index]) parsedSteps[index].image = `/uploads/${file.filename}`;
+        if (parsedSteps[index]) parsedSteps[index].image = file.path;
       });
     }
 
@@ -155,7 +152,7 @@ exports.createCraft = async (req, res) => {
       price,
       category,
       materials: parsedMaterials,
-      image: `/uploads/${req.files.image[0].filename}`, // main craft image
+      image: req.files.image[0].path,      
       tutorialVideo,
       tutorialSteps: parsedSteps,
     });
@@ -190,26 +187,22 @@ exports.updateCraft = async (req, res) => {
     craft.category = category || craft.category;
     craft.tutorialVideo = tutorialVideo || craft.tutorialVideo;
 
-    // Parse materials
     if (materials) craft.materials = JSON.parse(materials);
 
-    // Parse tutorial steps
     const parsedSteps = tutorialSteps
       ? JSON.parse(tutorialSteps)
       : craft.tutorialSteps;
 
-    // Attach/update step images if uploaded
     if (req.files?.stepImages) {
       req.files.stepImages.forEach((file, index) => {
-        if (parsedSteps[index]) parsedSteps[index].image = `/uploads/${file.filename}`;
+        if (parsedSteps[index]) parsedSteps[index].image = file.path;
       });
     }
 
     craft.tutorialSteps = parsedSteps;
 
-    // Update main craft image if uploaded
     if (req.files?.image && req.files.image[0]) {
-      craft.image = `/uploads/${req.files.image[0].filename}`;
+       craft.image = req.files.image[0].path;   
     }
 
     await craft.save();

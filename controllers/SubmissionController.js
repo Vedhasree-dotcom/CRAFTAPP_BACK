@@ -10,7 +10,7 @@ exports.createSubmission = async (req, res) => {
       userId: req.user._id,
       craftId: req.body.craftId,
       description: req.body.description,
-      images: ["/uploads/" + req.file.filename],  
+      images: [req.file.path],     
       status: "pending"
     });
 
