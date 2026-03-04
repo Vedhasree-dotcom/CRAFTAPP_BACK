@@ -54,23 +54,28 @@ router.post("/register", async(req, res) => {
         const token = jwt.sign({ id: user._id}, process.env.JWT_SECRET, 
             {expiresIn: "1h"}); 
 
-
         const BACKEND_URL = process.env.BACKEND_URL;
         const url = `${BACKEND_URL}/api/auth/verify/${token}`;
         
-        await transporter.sendMail({ 
-            from: `"CraftMate" <${process.env.EMAIL_USER}>`,
-            to:email,
-            subject: "Verify your email",
-            html: `<h3>Click <a href="${url}">here</a> to verify your email</h3>`,
-        });
-
-        await user.save();
+        // ↓ REPLACE YOUR sendMail WITH THIS
+        try {
+            await transporter.sendMail({ 
+                from: `"CraftApp" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject: "Verify your email",
+                html: `<h3>Click <a href="${url}">here</a> to verify your email</h3>`,
+            });
+            console.log("EMAIL SENT SUCCESSFULLY"); // ← shows in Render logs
+        } catch(emailErr) {
+            console.log("EMAIL ERROR:", emailErr.message); // ← shows in Render logs
+            return res.status(500).json({ message: "Email failed: " + emailErr.message });
+        }
 
         res.status(201).json({ message: "User registered. Check your email to verify."});
     }
     catch(err) {
-        res.status(500).json({message:err.message});
+        console.log("REGISTER ERROR:", err.message);
+        res.status(500).json({message: err.message});
     }
 });
 
