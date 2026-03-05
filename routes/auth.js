@@ -10,14 +10,13 @@ require("dotenv").config();
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS, 
     },
 });
-
 
 
 function isEmail(value) {
@@ -57,7 +56,6 @@ router.post("/register", async(req, res) => {
         const BACKEND_URL = process.env.BACKEND_URL;
         const url = `${BACKEND_URL}/api/auth/verify/${token}`;
         
-        // ↓ REPLACE YOUR sendMail WITH THIS
         try {
             await transporter.sendMail({ 
                 from: `"CraftApp" <${process.env.EMAIL_USER}>`,
@@ -65,9 +63,9 @@ router.post("/register", async(req, res) => {
                 subject: "Verify your email",
                 html: `<h3>Click <a href="${url}">here</a> to verify your email</h3>`,
             });
-            console.log("EMAIL SENT SUCCESSFULLY"); // ← shows in Render logs
+            console.log("EMAIL SENT SUCCESSFULLY"); 
         } catch(emailErr) {
-            console.log("EMAIL ERROR:", emailErr.message); // ← shows in Render logs
+            console.log("EMAIL ERROR:", emailErr.message); 
             return res.status(500).json({ message: "Email failed: " + emailErr.message });
         }
 
