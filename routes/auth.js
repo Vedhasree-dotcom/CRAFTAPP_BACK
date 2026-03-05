@@ -8,13 +8,12 @@ require("dotenv").config();
 
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
+    host: 'smtp-relay.brevo.com',    
     port: 587,
     secure: false,
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, 
+        user: process.env.BREVO_USER,
+        pass: process.env.BREVO_PASS, 
     },
 });
 
@@ -58,7 +57,7 @@ router.post("/register", async(req, res) => {
         
         try {
             await transporter.sendMail({ 
-                from: `"CraftApp" <${process.env.EMAIL_USER}>`,
+                from: `"CraftMate" <${process.env.EMAIL_USER}>`,
                 to: email,
                 subject: "Verify your email",
                 html: `<h3>Click <a href="${url}">here</a> to verify your email</h3>`,
