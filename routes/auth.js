@@ -3,19 +3,30 @@ const router = express.Router();
 const User = require("../models/User")
 const bcrypt = require("bcryptjs"); 
 const jwt = require("jsonwebtoken"); 
-const nodemailer = require("nodemailer"); 
+const axios = require("axios");
 require("dotenv").config();
 
 
-const transporter = nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',    
-    port: 465,
-    secure: true,
-    auth: {
-        user: process.env.BREVO_USER,
-        pass: process.env.BREVO_PASS, 
-    },
-});
+// Brevo HTTP API - works on Render free tier (no SMTP port blocking)
+async function sendEmail(to, subject, html) {
+    try {
+        await axios.post('https://api.brevo.com/v3/smtp/email', {
+            sender: { name: 'CraftMate', email: process.env.EMAIL_USER },
+            to: [{ email: to }],
+            subject,
+            htmlContent: html,
+        }, {
+            headers: {
+                'api-key': process.env.BREVO_API_KEY,
+                'Content-Type': 'application/json',
+            }
+        });
+        console.log("EMAIL SENT SUCCESSFULLY to:", to);
+    } catch (err) {
+        console.log("EMAIL ERROR:", err.response?.data || err.message);
+        throw new Error(err.response?.data?.message || err.message);
+    }
+}
 
 
 function isEmail(value) {
@@ -37,7 +48,7 @@ router.post("/register", async(req, res) => {
     if (!email || !isEmail(email))
          return res.status(400).json({ message: 'Valid email is required' });
     if (!password || !isPassword(password))
-        return res.status(400).json({ message: 'Password must be at least 6 caracters' });
+        return res.status(400).json({ message: 'Password must be at least 6 characters' });
     if (!phone || !isPhoneE164(phone))
         return res.status(400).json({ message: 'Phone is required in E.164 format (eg. +1234567890)' });
 
@@ -47,26 +58,23 @@ router.post("/register", async(req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10); 
         const user = new User({ name, email, phone, password: hashedPassword });
-        await user.save();
 
         const token = jwt.sign({ id: user._id}, process.env.JWT_SECRET, 
             {expiresIn: "1h"}); 
 
-        const BACKEND_URL = process.env.BACKEND_URL;
-        const url = `${BACKEND_URL}/api/auth/verify/${token}`;
+        const url = `${process.env.BACKEND_URL}/api/auth/verify/${token}`;
         
         try {
-            await transporter.sendMail({ 
-                from: `"CraftMate" <${process.env.EMAIL_USER}>`,
-                to: email,
-                subject: "Verify your email",
-                html: `<h3>Click <a href="${url}">here</a> to verify your email</h3>`,
-            });
-            console.log("EMAIL SENT SUCCESSFULLY"); 
+            await sendEmail(
+                email,
+                "Verify your email",
+                `<h3>Click <a href="${url}">here</a> to verify your email</h3>`
+            );
         } catch(emailErr) {
-            console.log("EMAIL ERROR:", emailErr.message); 
             return res.status(500).json({ message: "Email failed: " + emailErr.message });
         }
+
+        await user.save();
 
         res.status(201).json({ message: "User registered. Check your email to verify."});
     }
@@ -81,9 +89,8 @@ router.get("/verify/:token", async (req, res) => {
         const { id } = jwt.verify(req.params.token, process.env.JWT_SECRET);
         await User.findByIdAndUpdate(id, { isVerified: true });
 
-        const FRONTEND = process.env.FRONTEND_URL
+        const FRONTEND = process.env.FRONTEND_URL;
         return res.redirect(`${FRONTEND}/login?verified=1`);
-
     } 
     catch (err) {
         res.status(400).send("Invalid or expired link");
@@ -128,10 +135,9 @@ router.post("/login", async (req, res) => {
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             secure: true,        
-            sameSite: "none",    // allow cross-site
+            sameSite: "none",
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
-
 
         res.json({ message: "Login successful", accessToken });
 
@@ -158,21 +164,18 @@ router.post("/forgot-password", async (req, res) => {
         user.resetOtpExpire = Date.now() + 10 * 60 * 1000; 
         await user.save();
 
-        await transporter.sendMail({
-            from: `"CraftMate" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: "Password Reset OTP",
-            html: `<h3>Your password reset OTP is: <b>${otp}</b></h3>
-                   <p>This OTP is valid for 10 minutes.</p>`,
-        });
+        await sendEmail(
+            email,
+            "Password Reset OTP",
+            `<h3>Your password reset OTP is: <b>${otp}</b></h3>
+             <p>This OTP is valid for 10 minutes.</p>`
+        );
 
         res.json({ message: "Password reset OTP sent to email" });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
-
-
 
 
 router.post("/refresh", async (req, res) => {
@@ -196,15 +199,12 @@ router.post("/refresh", async (req, res) => {
 
         const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {expiresIn: "15m"})
 
-       
         res.json({ accessToken });
-        }
-        catch(err) {
-            res.status(500).json({ message: err.message });
-        }
-    
+    }
+    catch(err) {
+        res.status(500).json({ message: err.message });
+    }
 });
-
 
 
 router.post("/reset-password", async (req, res) => {
@@ -242,12 +242,12 @@ router.post("/reset-password", async (req, res) => {
 });
 
 router.post("/verify-reset-otp", async (req, res) => {
-  const { email, otp } = req.body;
+    const { email, otp } = req.body;
 
-  const user = await User.findOne({ email, resetOtp: otp, resetOtpExpire: { $gt: Date.now() } });
-  if (!user) return res.status(400).json({ message: "Invalid or expired OTP" });
+    const user = await User.findOne({ email, resetOtp: otp, resetOtpExpire: { $gt: Date.now() } });
+    if (!user) return res.status(400).json({ message: "Invalid or expired OTP" });
 
-  res.json({ message: "OTP verified successfully" });
+    res.json({ message: "OTP verified successfully" });
 });
 
 
@@ -261,22 +261,17 @@ router.post("/logout", async (req, res) => {
                 await user.save();
             }
         }
-        // res.clearCookie("refreshToken", { httpOnly: true, sameSite: "lax"});
         res.clearCookie("refreshToken", {
             httpOnly: true,
             secure: true,
             sameSite: "none",
         }); 
         
-        res.json({ message: "Logged out "});
+        res.json({ message: "Logged out" });
     } catch(err) {
         res.status(500).json({ message: err.message });
     }
 });
-
-
-
-
 
 
 module.exports = router;
