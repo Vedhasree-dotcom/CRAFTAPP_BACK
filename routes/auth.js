@@ -7,7 +7,6 @@ const axios = require("axios");
 require("dotenv").config();
 
 
-// Brevo HTTP API - works on Render free tier (no SMTP port blocking)
 async function sendEmail(to, subject, html) {
     try {
         await axios.post('https://api.brevo.com/v3/smtp/email', {
